@@ -1,4 +1,4 @@
-# superblocks
+# paseo
 Where could new pedestrian connections in an urban grid connect the most people to each other?
 
 Problem: People in many areas are unable to walk to nearby attractions because of inefficient connectivity of pathways (whether these are sidewalks or something else).
