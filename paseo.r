@@ -1,5 +1,16 @@
-# Nick Eubank's GIS in R: http://www.nickeubank.com/gis-in-r/
-# Claudia Engel's mapping and spatial analysis in R: http://www.rpubs.com/cengel248
+# INSTALL PACKAGES
+
+# rgdal is used for reading in shapefiles
+install.packages("rgdal")
+library("rgdal", lib.loc="~/R/win-library/3.3")
+
+# tidyverse is used for data manipulation
+install.packages("tidyverse")
+library("tidyverse", lib.loc="~/R/win-library/3.3")
+
+# sf is used for random dot generation within Census block groups
+install.packages("sf")
+library("sf", lib.loc="~/R/win-library/3.3")
 
 
 # 1. IMPORT STREETS DATA
@@ -7,9 +18,6 @@
 # we will use streets to define the pedestrian network since in Austin the sidewalk network is limited,
 # the existing sidewalk data layer does not include street crossings (precluding block creation)
 # and most (though not all) road segments lacking sidewalks are still traverseable by pedestrians
-
-install.packages("rgdal")
-library("rgdal", lib.loc="~/R/win-library/3.3")
 
 # import streets layer
 streets <- readOGR(dsn="C:/Users/nicmo/OneDrive/Data projects/Superblocks - Network connectivity efficiency map Mar 2018/Austin street center lines 2018 Mar 28", layer="geo_export_331c6fce-a3a4-4c4a-a4cb-118405c321fa")
@@ -59,13 +67,43 @@ rm(Hays,Travis,WillCo)
 # 3. ASSOCIATE POPULATION DATA WITH BLOCK GROUPS
 
 # import population estimates (2016 ACS 5-year) for each block group
-acsPopData <- read_csv("C:/Users/nicmo/OneDrive/Data projects/Superblocks - Network connectivity efficiency map Mar 2018/ACS 5-year residential population estimates 2016 by block group/ACS_16_5YR_B01003_with_ann.csv", skip = 1)
+acsPopData <- read.csv("C:/Users/nicmo/OneDrive/Data projects/Superblocks - Network connectivity efficiency map Mar 2018/ACS 5-year residential population estimates 2016 by block group/ACS_16_5YR_B01003_with_ann.csv", skip = 1)
 
 # merge population estimates into blockGroups spatial data frame
 blockGroups <- merge(blockGroups, acsPopData, by.x = "GEOID", by.y = "Id2")
 
 
 # 4. ESTIMATE POPULATION VALUES FOR EACH STREET SEGMENT
+
+# random dot generator
+# this reduces the generated dots by a factor of 100 to save on generation time
+# each dot can be thought of as representing 100 people
+random_round <- function(x) {
+  v=as.integer(x)
+  r=x-v
+  test=runif(length(r), 0.0, 1.0)
+  add=rep(as.integer(0),length(r))
+  add[r>test] <- as.integer(1)
+  value=v+add
+  ifelse(is.na(value) | value<0,0,value)
+  return(value)
+}
+
+num_dots <- as.data.frame(blockGroups) %>% 
+  select(Estimate..Total) %>% 
+  mutate_all(funs(. / 100)) %>% 
+  mutate_all(random_round)
+
+# this generates the dots
+blockGroups2 <- as(blockGroups, "sf")
+sf_dots <- map_df(names(num_dots), 
+                  ~ st_sample(blockGroups2, size = num_dots[,.x], type = "random") %>% # generate the points in each polygon
+                    st_cast("POINT") %>%                                          # cast the geom set as 'POINT' data
+                    st_coordinates() %>%                                          # pull out coordinates into a matrix
+                    as_tibble() %>%                                               # convert to tibble
+                    setNames(c("lon","lat"))                                      # set column names
+) %>% 
+  slice(sample(1:n())) # once map_df binds rows randomise order to avoid bias in plotting order
 
 
 # 5. CALCULATE PEDESTRIAN CONNECTIVITY EFFICIENCIES FOR EACH SEGMENT
@@ -75,3 +113,10 @@ blockGroups <- merge(blockGroups, acsPopData, by.x = "GEOID", by.y = "Id2")
 
 
 # 7. MAP OUT STREET SEGMENT BY EFFICIENCY GAP
+
+
+# SOURCES
+# Nick Eubank's GIS in R: http://www.nickeubank.com/gis-in-r/
+# Claudia Engel's mapping and spatial analysis in R: http://www.rpubs.com/cengel248
+# Paul Campbell's dot generator demo: https://www.cultureofinsight.com/blog/2018/05/02/2018-04-08-multivariate-dot-density-maps-in-r-with-sf-ggplot2/
+# Jens von Bergmann's dot generator code: https://github.com/mountainMath/dotdensity/blob/master/R/dot-density.R
