@@ -105,6 +105,12 @@ sf_dots <- map_df(names(num_dots),
 ) %>% 
   slice(sample(1:n())) # once map_df binds rows randomise order to avoid bias in plotting order
 
+# at some point, need to introduce masking so dots are not generated in places like bodies of water, etc.
+
+# need to snap generated people to nearest street
+# resource: http://kateto.net/networks-r-igraph
+# resource: http://rstudio-pubs-static.s3.amazonaws.com/10396_0359e6e40fd64f1c95044451bd1dfb1c.html
+
 
 # 5. CALCULATE PEDESTRIAN CONNECTIVITY EFFICIENCIES FOR EACH SEGMENT
 
