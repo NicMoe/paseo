@@ -7,7 +7,7 @@ Goal: Identify locations in Austin where additional connectivity in terms of str
 
 Process:
   -	Take all people who reside within a given block, all people who work within a given block, and all students enrolled within a given block to estimate the ‘true’ population of each block. A ‘block’ in this sense refers to an area encompassed by roadways, so superblocks and areas of roadway ringing a body of water would be considered a ‘block’. Note that the sum of these people should be higher than the true population count, since individual might be double- or triple-counted where they sleep, work, and/or study.
-  -	Distribute all people within a given block randomly. This becomes a new layer.
+  -	Distribute all people within a given block group randomly. Alternatively, they could be distributed randomly within all building footprints within a block group to better represent real distribution of people (see [Microsoft's building footprints data](https://github.com/Microsoft/USBuildingFootprints)). This becomes a new layer.
   -	Snap each dot to the nearest roadway. Alternatively, break each road segment in sections of a given, short length. Count how many points are closer to that mini-segment that to any other, and represent this as a density within the mini road segment.
   -	Using a given distance (for reasonable walking purposes, this could be up to 1km) calculate for each individual how many other people they can reach using the road network, and how many they could reach as the crow flies.
   -	There are two meaningful metrics that can be calculated for each individual:
